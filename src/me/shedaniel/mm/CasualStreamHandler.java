@@ -60,7 +60,7 @@ public final class CasualStreamHandler extends URLStreamHandler {
 
 	public static URL create(Map<String, byte[]> mixins) {
 		try {
-			return new URL("magic-at", null, -1, "/", new CasualStreamHandler(mixins));
+			return new URL("magic-at-shedaniel", null, -1, "/", new CasualStreamHandler(mixins));
 		} catch (MalformedURLException e) {
 			throw new RuntimeException("Unexpected error creating URL", e);
 		}

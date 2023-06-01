@@ -10,13 +10,23 @@ def ENV = System.getenv()
 sourceCompatibility = targetCompatibility = 1.8
 
 archivesBaseName = "Manningham Mills"
-version = "2.4"
+version = "2.4.1"
+
+repositories {
+	maven {
+		url = "https://jitpack.io"
+		content {
+			includeGroup("com.github.Chocohead")
+		}
+	}
+}
 
 dependencies {
 	minecraft "com.mojang:minecraft:1.14.4"
 	mappings "net.fabricmc:yarn:1.14.4+build.18:v2"
 	modCompileOnly "net.fabricmc:fabric-loader:0.7.0+build.171"
 	modLocalRuntime "net.fabricmc:fabric-loader:0.7.0+build.171"
+	modLocalRuntime "com.github.Chocohead:Fabric-ASM:v2.3"
 }
 
 tasks.withType(JavaCompile) {

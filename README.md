@@ -19,7 +19,7 @@ repositories {
 dependencies {
     // You will want to use include as well
     // Check out the latest version at https://maven.shedaniel.me/me/shedaniel/mm
-    modImplementation "me.shedaniel:mm:2.4"
+    modImplementation "me.shedaniel:mm:2.4.1"
 }
 ```
 

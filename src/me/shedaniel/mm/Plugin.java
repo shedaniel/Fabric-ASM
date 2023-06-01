@@ -7,7 +7,6 @@
  */
 package me.shedaniel.mm;
 
-import java.io.IOException;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
@@ -17,13 +16,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Scanner;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -36,11 +33,7 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.InnerClassNode;
-import org.objectweb.asm.tree.MethodInsnNode;
-import org.objectweb.asm.tree.MethodNode;
 
 import org.spongepowered.asm.mixin.MixinEnvironment;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
@@ -92,39 +85,7 @@ public final class Plugin implements IMixinConfigPlugin {
 	@Override
 	public void onLoad(String rawMixinPackage) {
 		String mixinPackage = rawMixinPackage.replace('.', '/');
-
-		Map<String, Set<String>> transforms = new HashMap<>();
-		try {
-			Enumeration<URL> urls = MM.class.getClassLoader().getResources("silky.at");
-			while (urls.hasMoreElements()) {
-				URL url = urls.nextElement();
-				//System.out.println("Found AT: " + url);
-
-				try (Scanner scanner = new Scanner(url.openStream())) {
-					//System.out.println("Made scanner");
-					while (scanner.hasNextLine()) {
-						String line = scanner.nextLine().trim();
-						//System.out.println("On line: \"" + line + '\"');
-						if (line.isEmpty() || line.startsWith("#")) continue;
-
-						int split = line.indexOf(' ');
-						String className, method;
-						if (split > 0) {
-							className = line.substring(0, split++);
-							method = line.substring(split);
-						} else {
-							className = line;
-							method = "<*>";
-						}
-
-						transforms.computeIfAbsent(className, k -> new HashSet<>()).add(method);
-					}
-					//System.out.println("Finished with scanner");
-				}
-			}
-		} catch (IOException e) {
-			throw new RuntimeException("Error loading access transformers", e);
-		}
+		MM.LOGGER.info("Started MM (shedaniel's fork) at " + mixinPackage);
 
 		//transforms.computeIfAbsent("net.minecraft.item.ItemStack", k -> new HashSet<>()).add("<*>");
 		//this.transforms.add("net.minecraft.class_1234");
@@ -132,14 +93,9 @@ public final class Plugin implements IMixinConfigPlugin {
 		transforms.computeIfAbsent("net.minecraft.entity.passive.SheepEntity", k -> new HashSet<>()).add("<*>");
 		transforms.computeIfAbsent("net.minecraft.client.gui.ingame.CreativePlayerInventoryScreen$CreativeSlot", k -> new HashSet<>()).add("<*>");*/
 
-		for (Entry<String, Set<String>> entry : transforms.entrySet()) {
-			//System.out.println("Adding transformation " + entry.getKey() + " => " + entry.getValue());
-			ClassTinkerers.addTransformation(entry.getKey(), makeAT(entry.getValue()));
-		}
-
 		Map<String, byte[]> classGenerators = new HashMap<>();
 		Map<String, Set<ClassNodeConsumer>> classModifiers = new HashMap<String, Set<ClassNodeConsumer>>() {
-			private static final long serialVersionUID = 4152702952480161028L;
+			private static final long serialVersionUID = 4152702952481261028L;
 			private boolean skipGen = false;
 			private int massPool = 1;
 
@@ -166,7 +122,7 @@ public final class Plugin implements IMixinConfigPlugin {
 			}
 		};
 		Map<String, Consumer<ClassNode>> classReplacers = new HashMap<String, Consumer<ClassNode>>() {
-			private static final long serialVersionUID = -1226882557534215762L;
+			private static final long serialVersionUID = -1226882557454215762L;
 			private boolean skipGen = false;
 
 			@Override
@@ -185,7 +141,7 @@ public final class Plugin implements IMixinConfigPlugin {
 			}
 		};
 		Set<EnumAdder> enumExtenders = new HashSet<EnumAdder>() {
-			private static final long serialVersionUID = -2218861530200989346L;
+			private static final long serialVersionUID = -2218861530200981246L;
 			private boolean skipCheck = false;
 
 			private void addTransformations(EnumAdder builder) {
@@ -284,41 +240,6 @@ public final class Plugin implements IMixinConfigPlugin {
 
 		cw.visitEnd();
 		return cw.toByteArray();
-	}
-
-	private static Consumer<ClassNode> makeAT(Set<String> transforms) {
-		return node -> {
-			//System.out.println("ATing " + node.name + " with " + transforms);
-			if (transforms.remove("<*>")) {
-				node.access = flipBits(node.access);
-
-				for (InnerClassNode innerClass : node.innerClasses) {
-					if (node.name.equals(innerClass.name)) {
-						innerClass.access = flipBits(innerClass.access);
-						break;
-					}
-				}
-			}
-
-			if (!transforms.isEmpty()) {
-				for (MethodNode method : node.methods) {
-					if (transforms.contains(method.name + method.desc)) {
-						method.access = flipBits(method.access);
-					}
-					for (AbstractInsnNode insnNode : method.instructions) {
-						if (insnNode.getOpcode() == Opcodes.INVOKESPECIAL) {
-							MethodInsnNode methodInsnNode = (MethodInsnNode) insnNode;
-
-							if (!methodInsnNode.name.equals("<init>") && methodInsnNode.owner.equals(node.name) && transforms.contains(methodInsnNode.name + methodInsnNode.desc)) {
-								// Private methods are normally invoked with INVOKESPECIAL
-								// We want to make sure that any private -> public methods are invoked with INVOKEVIRTUAL, so that the JVM correctly handles potential inheritance
-								methodInsnNode.setOpcode(Opcodes.INVOKEVIRTUAL);
-							}
-						}
-					}
-				}
-			}
-		};
 	}
 
 	private static final int ACCESSES = ~(Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED | Opcodes.ACC_PRIVATE);
