@@ -23,11 +23,13 @@ dependencies {
 }
 ```
 
+Additionally, the early riser entrypoint is changed to `mm_shedaniel:early_risers`.
+
 ## Exploiting Extender's Cove
 ### Waiting for High Tide
 Registering additions that want to be made has to happen very early on in the mod loading process. As a result it is quite reasonable to expect that a given mod's initialisers are yet to be run. To resolve this (and the class loading pitfalls described below), MM has a system of "Early Risers" which are classes that implement `Runnable` and are called as early as when necessary.
 
-Early Risers are defined via an [entrypoint](https://fabricmc.net/wiki/documentation:entrypoint) defined like normal in a mod's `fabric.mod.json`. The Early Riser entrypoint name is `mm:early_risers`, and it uses the type `Runnable` so will have `run` called on entry. The provided example's Early Riser definition is [here](example/resources/fabric.mod.json#L20-L22).
+Early Risers are defined via an [entrypoint](https://fabricmc.net/wiki/documentation:entrypoint) defined like normal in a mod's `fabric.mod.json`. The Early Riser entrypoint name is `mm_shedaniel:early_risers`, and it uses the type `Runnable` so will have `run` called on entry. The provided example's Early Riser definition is [here](example/resources/fabric.mod.json#L20-L22).
 
 ### Navigating the Entrance
 The earliness that extensions require poses potential pitfalls from class loading. Given the main launch class will get to be resolved, any accidental reference to a class that might have Mixins that need to be applied will certainly result in a sad time. As a consequence there's a great need to be careful the for classes that might be loaded by an Early Riser.
