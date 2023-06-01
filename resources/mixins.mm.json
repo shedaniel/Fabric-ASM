@@ -1,11 +1,10 @@
 {
 	"required": true,
-	"package": "com.chocohead.gen.mixin.",
+	"package": "me.shedaniel.gen.mixin.",
 	"compatibilityLevel": "JAVA_8",
-	"plugin": "com.chocohead.mm.Plugin",
+	"plugin": "me.shedaniel.mm.Plugin",
 	"mixins": [
 	],
-	"refmap": "mixins.mm.refmap.json",
 	"injectors": {
 		"defaultRequire": 1
 	}

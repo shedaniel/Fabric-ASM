@@ -1,58 +1,54 @@
-buildscript {
-	repositories {
-		maven {
-			name = "Fabric"
-			url = "https://maven.fabricmc.net/"
-		}
-		jcenter()
-		maven {
-			name = "Forge"
-			url = "https://files.minecraftforge.net/maven/"
-		}
-		maven { 
-			name = "Jitpack"
-			url 'https://jitpack.io/'
-		}
-	}
-	dependencies {
-        classpath 'com.github.Chocohead:fabric-loom:415c6b'
-	}
+plugins {
+	id "dev.architectury.loom" version "1.0-SNAPSHOT"
+	id "maven-publish"
 }
 
-apply plugin: "fabric-loom"
-import net.fabricmc.loom.task.RemappingJar;
+import net.fabricmc.loom.task.RemapJarTask
+import net.fabricmc.loom.task.RemapSourcesJarTask
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+def ENV = System.getenv()
+sourceCompatibility = targetCompatibility = 1.8
 
 archivesBaseName = "Manningham Mills"
-version = "2.3"
-
-minecraft {
-	refmapName = "mixins.mm.refmap.json"
-	AT = file("example/resources/access-transformations.txt")
-}
+version = "2.4"
 
 dependencies {
-	minecraft "com.mojang:minecraft:1.14 Pre-Release 3"
-	mappings "net.fabricmc:yarn:1.14 Pre-Release 3+build.1:tiny@gz"
-	modCompile "net.fabricmc:fabric-loader:0.7.0+build.171"
+	minecraft "com.mojang:minecraft:1.14.4"
+	mappings "net.fabricmc:yarn:1.14.4+build.18:v2"
+	modCompileOnly "net.fabricmc:fabric-loader:0.7.0+build.171"
+	modLocalRuntime "net.fabricmc:fabric-loader:0.7.0+build.171"
+}
+
+tasks.withType(JavaCompile) {
+	options.encoding = "UTF-8"
+	options.release = 8
+}
+
+tasks.withType(GenerateModuleMetadata) {
+	enabled = false
+}
+
+processResources {
+	filesMatching("fabric.mod.json") {
+		expand "version": project.version
+	}
+	inputs.property "version", project.version
 }
 
 sourceSets {
 	main {
 		java {
-			srcDir 'src'
+			srcDir "src"
 		}
 		resources {
-			srcDir 'resources'
+			srcDir "resources"
 		}
 	}
 	example {
 		compileClasspath += main.compileClasspath + main.output
 		annotationProcessorPath = main.annotationProcessorPath
 		java {
-			srcDir 'example/src'
+			srcDir "example/src"
 		}
 		resources {
 			srcDir 'example/resources'
@@ -61,38 +57,51 @@ sourceSets {
 	}
 }
 
-jar {
-	AT.include = false
+java {
+	withSourcesJar()
 }
 
-task exampleJar(type: RemappingJar, dependsOn: exampleClasses) {
-	classifier = "example"
+task exampleJar(type: Jar, dependsOn: exampleClasses) {
+	classifier "example-raw"
 	from sourceSets.example.output
 }
 
-task sourcesJar(type: Jar, dependsOn: classes) {
-	classifier = "sources"
-	from sourceSets.main.allSource
-}
-
-task exampleSourcesJar(type: RemappingJar, dependsOn: exampleClasses) {
-	classifier = "example-sources"
+task exampleSourcesJar(type: Jar, dependsOn: exampleClasses) {
+	classifier "example-sources-raw"
 	from sourceSets.example.allSource
 }
 
-build.dependsOn exampleJar, exampleSourcesJar
+task exampleRemappedJar(type: RemapJarTask, dependsOn: exampleJar) {
+	classifier "example"
+	inputFile.set tasks.exampleJar.archiveFile
+	
+}
 
-artifacts {
-	archives(remapJar) {
-		builtBy remapJar
+task exampleRemappedSourcesJar(type: RemapSourcesJarTask, dependsOn: exampleSourcesJar) {
+	classifier "example-sources"
+	inputFile.set tasks.exampleSourcesJar.archiveFile
+}
+
+build.dependsOn exampleRemappedJar, exampleRemappedSourcesJar
+
+publishing {
+	publications {
+		mavenJava(MavenPublication) {
+			groupId = "me.shedaniel"
+			artifactId = "mm"
+			from components.java
+		}
 	}
-	archives(exampleJar) {
-		builtBy exampleJar
-	}
-	archives(sourcesJar) {
-		builtBy sourcesJar
-	}
-	archives(exampleSourcesJar) {
-		builtBy exampleSourcesJar
+
+	repositories {
+		if (ENV.MAVEN_PASS != null) {
+			maven {
+				url = "https://deploy.shedaniel.me/"
+				credentials {
+					username = "shedaniel"
+					password = ENV.MAVEN_PASS
+				}
+			}
+		}
 	}
 }

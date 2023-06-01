@@ -1,23 +1,24 @@
 {
 	"schemaVersion": 1,
-	"id": "mm",
-	"name": "Manningham Mills",
+	"id": "mm_shedaniel",
+	"name": "Manningham Mills (shedaniel's fork)",
 	"description": "The mod to do what asie said Fabric shouldn't allow you to do",
-	"version": "2.3",
+	"version": "${version}",
 	"icon": "assets/mm/icon.png",
 	"authors": [
-		"Chocohead"
+		"Chocohead",
+		"shedaniel"
 	],
 	"contact": {
-		"homepage": "https://github.com/Chocohead/Fabric-ASM",
-		"sources": "https://github.com/Chocohead/Fabric-ASM",
-		"issues": "https://github.com/Chocohead/Fabric-ASM/issues"
+		"homepage": "https://github.com/shedaniel/Fabric-ASM",
+		"sources": "https://github.com/shedaniel/Fabric-ASM",
+		"issues": "https://github.com/shedaniel/Fabric-ASM/issues"
 	},
 	"license": "MPL-2.0",
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-			"com.chocohead.mm.MM"
+			"me.shedaniel.mm.MM"
 		]
 	},
 	"depends": {

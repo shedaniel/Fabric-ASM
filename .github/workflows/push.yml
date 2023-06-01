@@ -1,0 +1,51 @@
+name: Build and Release (1.19)
+
+on:
+  push:
+    paths:
+      - '**.gradle'
+      - '**.properties'
+      - '**/src/**'
+    branches:
+      - "master"
+  workflow_dispatch:
+    inputs:
+      norelease:
+        description: 'Do not publish'
+        required: true
+        default: 'false'
+
+jobs:
+  build:
+    name: "Build and Release"
+    runs-on: ubuntu-20.04
+    if: |
+      !contains(github.event.head_commit.message, '[ci skip]')
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v2
+        with:
+          java-version: 17
+          distribution: 'temurin'
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: Setup and Build with Gradle
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: build --stacktrace --no-daemon
+
+      - name: Release to Maven
+        uses: gradle/gradle-build-action@v2
+        if: |
+          !contains(github.event.head_commit.message, '[norelease]') && github.event.inputs.norelease != 'true'
+        env:
+          # currently unused, may want to use these for changelogs though!
+          # GIT_COMMIT: ${{ github.event.after }}
+          # GIT_PREVIOUS_COMMIT: ${{ github.event.before }}
+          MAVEN_PASS: ${{ secrets.MAVEN_PASS }}
+        with:
+          arguments: publish --stacktrace --no-daemon

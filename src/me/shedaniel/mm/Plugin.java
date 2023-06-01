@@ -5,7 +5,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package com.chocohead.mm;
+package me.shedaniel.mm;
 
 import java.io.IOException;
 import java.lang.invoke.MethodHandle;
@@ -52,15 +52,15 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 import net.fabricmc.loader.api.metadata.CustomValue;
 
-import com.chocohead.mm.EnumSubclasser.StructClass;
-import com.chocohead.mm.api.ClassTinkerers;
-import com.chocohead.mm.api.EnumAdder;
-import com.chocohead.mm.api.EnumAdder.EnumAddition;
+import me.shedaniel.mm.EnumSubclasser.StructClass;
+import me.shedaniel.mm.api.ClassTinkerers;
+import me.shedaniel.mm.api.EnumAdder;
+import me.shedaniel.mm.api.EnumAdder.EnumAddition;
 
 public final class Plugin implements IMixinConfigPlugin {
 	final List<String> mixins = new ArrayList<>();
 	final Map<String, String> enumStructParents = new HashMap<>();
-	private Map<String, Set<Consumer<ClassNode>>> classModifiers;
+	private Map<String, Set<ClassNodeConsumer>> classModifiers;
 
 	private static Consumer<URL> fishAddURL() {
 		ClassLoader loader = Plugin.class.getClassLoader();
@@ -138,7 +138,7 @@ public final class Plugin implements IMixinConfigPlugin {
 		}
 
 		Map<String, byte[]> classGenerators = new HashMap<>();
-		Map<String, Set<Consumer<ClassNode>>> classModifiers = new HashMap<String, Set<Consumer<ClassNode>>>() {
+		Map<String, Set<ClassNodeConsumer>> classModifiers = new HashMap<String, Set<ClassNodeConsumer>>() {
 			private static final long serialVersionUID = 4152702952480161028L;
 			private boolean skipGen = false;
 			private int massPool = 1;
@@ -152,13 +152,13 @@ public final class Plugin implements IMixinConfigPlugin {
 			}
 
 			@Override
-			public Set<Consumer<ClassNode>> put(String key, Set<Consumer<ClassNode>> value) {
+			public Set<ClassNodeConsumer> put(String key, Set<ClassNodeConsumer> value) {
 				if (!skipGen) generate(key, Collections.singleton(key));
 				return super.put(key, value);
 			}
 
 			@Override
-			public void putAll(Map<? extends String, ? extends Set<Consumer<ClassNode>>> m) {
+			public void putAll(Map<? extends String, ? extends Set<ClassNodeConsumer>> m) {
 				skipGen = true;
 				generate("MassExport_" + massPool++, m.keySet());
 				super.putAll(m);
@@ -337,15 +337,15 @@ public final class Plugin implements IMixinConfigPlugin {
 	@Override
 	public List<String> getMixins() {
 		//System.out.println("Have " + mixins);
-		FabricLoader.getInstance().getEntrypoints("mm:early_risers", Runnable.class).forEach(Runnable::run);
+		FabricLoader.getInstance().getEntrypoints("mm_shedaniel:early_risers", Runnable.class).forEach(Runnable::run);
 		for (ModContainer mod : FabricLoader.getInstance().getAllMods()) {
-			if (mod.getMetadata().containsCustomValue("mm:early_risers")) {
+			if (mod.getMetadata().containsCustomValue("mm_shedaniel:early_risers")) {
 				System.out.println(mod.getMetadata().getName() + " is still using the traditional Early Riser initialisation");
-				for (CustomValue riser : mod.getMetadata().getCustomValue("mm:early_risers").getAsArray()) {
+				for (CustomValue riser : mod.getMetadata().getCustomValue("mm_shedaniel:early_risers").getAsArray()) {
 					try {
 						Class.forName(riser.getAsString()).asSubclass(Runnable.class).newInstance().run();
 					} catch (ReflectiveOperationException e) {
-						throw new RuntimeException("Error loading early riser from " + mod.getMetadata().getId(), e);
+						throw new RuntimeException("Error loading (shedaniel's fork) early riser from " + mod.getMetadata().getId(), e);
 					}
 				}
 			}
@@ -372,9 +372,9 @@ public final class Plugin implements IMixinConfigPlugin {
 	public void preApply(String targetClassName, ClassNode targetClass, String mixinClassName, IMixinInfo mixinInfo) {
 		//System.out.println("Pre-applying " + targetClassName + " via " + mixinClassName);
 
-		Set<Consumer<ClassNode>> transformations = classModifiers.get(targetClassName.replace('.', '/'));
+		Set<ClassNodeConsumer> transformations = classModifiers.get(targetClassName.replace('.', '/'));
 		if (transformations != null) {
-			for (Consumer<ClassNode> transformer : transformations) {
+			for (ClassNodeConsumer transformer : transformations) {
 				transformer.accept(targetClass);
 			}
 		}
@@ -383,5 +383,12 @@ public final class Plugin implements IMixinConfigPlugin {
 	@Override
 	public void postApply(String targetClassName, ClassNode targetClass, String mixinClassName, IMixinInfo mixinInfo) {
 		targetClass.interfaces.remove(mixinClassName.replace('.', '/'));
+
+		Set<ClassNodeConsumer> transformations = classModifiers.get(targetClassName.replace('.', '/'));
+		if (transformations != null) {
+			for (ClassNodeConsumer transformer : transformations) {
+				transformer.acceptPost(targetClass);
+			}
+		}
 	}
 }

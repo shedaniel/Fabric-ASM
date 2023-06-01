@@ -8,21 +8,21 @@
 		"Chocohead"
 	],
 	"contact": {
-		"sources": "https://github.com/Chocohead/Fabric-ASM/example",
-		"issues": "https://github.com/Chocohead/Fabric-ASM/issues"
+		"sources": "https://github.com/shedaniel/Fabric-ASM/example",
+		"issues": "https://github.com/shedaniel/Fabric-ASM/issues"
 	},
 	"license": "MPL-2.0",
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-			"com.chocohead.mm.testing.ExampleMod"
+          "me.shedaniel.mm.testing.ExampleMod"
 		],
-		"mm:early_risers": [
-			"com.chocohead.mm.testing.EarlyRiser"
+		"mm_shedaniel:early_risers": [
+          "me.shedaniel.mm.testing.EarlyRiser"
 		]
 	},
 	"depends": {
 		"fabricloader": ">=0.7.0",
-		"mm": ">=2.3"
+		"mm_shedaniel": ">=2.3"
 	}
 }

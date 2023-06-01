@@ -5,7 +5,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package com.chocohead.mm;
+package me.shedaniel.mm;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -47,7 +47,7 @@ import org.objectweb.asm.tree.VarInsnNode;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.util.Annotations;
 
-import com.chocohead.mm.api.EnumAdder.EnumAddition;
+import me.shedaniel.mm.api.EnumAdder.EnumAddition;
 
 final class EnumSubclasser {
 	private static final class StructClassVisitor extends ClassVisitor {

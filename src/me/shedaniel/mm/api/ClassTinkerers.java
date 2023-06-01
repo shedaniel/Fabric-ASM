@@ -5,7 +5,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package com.chocohead.mm.api;
+package me.shedaniel.mm.api;
 
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -17,6 +17,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import me.shedaniel.mm.ClassNodeConsumer;
 import org.apache.commons.lang3.ArrayUtils;
 
 import org.objectweb.asm.Type;
@@ -39,9 +40,9 @@ public enum ClassTinkerers {
 	private Predicate<URL> urlers = url -> false;
 	private Map<String, byte[]> clazzes = new HashMap<>();
 	private Map<String, Consumer<ClassNode>> replacers = new HashMap<>();
-	private Map<String, Set<Consumer<ClassNode>>> tinkerers = new HashMap<>();
+	private Map<String, Set<ClassNodeConsumer>> tinkerers = new HashMap<>();
 	private Set<EnumAdder> enumExtensions = new HashSet<>();
-	public void hookUp(Consumer<URL> liveURL, Map<String, byte[]> liveClassMap, Map<String, Consumer<ClassNode>> liveReplacers, Map<String, Set<Consumer<ClassNode>>> liveTinkerers, Set<EnumAdder> liveEnums) {
+	public void hookUp(Consumer<URL> liveURL, Map<String, byte[]> liveClassMap, Map<String, Consumer<ClassNode>> liveReplacers, Map<String, Set<ClassNodeConsumer>> liveTinkerers, Set<EnumAdder> liveEnums) {
 		urlers = url -> {
 			liveURL.accept(url);
 			return true;
@@ -147,8 +148,12 @@ public enum ClassTinkerers {
 	 * @throws IllegalArgumentException If transformer is {@code null}
 	 */
 	public static void addTransformation(String target, Consumer<ClassNode> transformer) {
+		addTransformation(target, transformer, false);
+	}
+
+	public static void addTransformation(String target, Consumer<ClassNode> transformer, boolean post) {
 		if (transformer == null) throw new IllegalArgumentException("Tried to add null transformer for " + target);
-		INSTANCE.tinkerers.computeIfAbsent(target.replace('.', '/'), k -> new HashSet<>()).add(transformer);
+		INSTANCE.tinkerers.computeIfAbsent(target.replace('.', '/'), k -> new HashSet<>()).add(ClassNodeConsumer.of(transformer, post));
 	}
 
 	/**
